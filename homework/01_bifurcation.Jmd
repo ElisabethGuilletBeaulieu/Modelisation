@@ -6,14 +6,16 @@ layout: page
 
 # Introduction
 
-> Starting from the logistic model of growth with competition, you will (i)
-> propose an analysis to show how we can find a vaalue of the growth rate *r*
-> after which the population cannot persist (this will involve finding the
-> maximum of a function, and then iterating this function enough times from this
-> maximum), and (ii) plot the bifurcation diagram of the logistic model to show
-> that there is indeed a maximal growth rate after which the system becomes
-> unstable. Please note that you should not attempt to calculate this value by
-> hand, but you may attempt to guess it based on the results of the second step.
+In nature, a population of organisms, no matter what taxonomic group they 
+belong, will tend to grow through time according to a logistic model, since too 
+many obstacles, such as a limited amount of resources or the presence of 
+predators and illnesses, prevent the possibility of a truly exponential growth. 
+It would then be interesting to observe the effect of the scale of a growth R on 
+a population’s growth. Thus, two exercises will be conducted: first, we will set 
+up a model in which the growth rate will vary from 0.1 to higher values in order 
+to find the value at which the population will no longer be able to sustain itself. 
+Furthermore, we will use a bifurcation diagram in order to depict the point at which 
+the model will become unstable.
 
 ## Required packages
 
@@ -23,12 +25,110 @@ using Plots
 
 ## Model description and justification
 
-<!-- Use this model, it assumes that K = 1, making the system dimensionless -->
+The number of individuals in this discreet-time model increases following according
+to a parameter n(t) times R (1.1), n(t) corresponds to the number of individuals at 
+time t, and R, to a compound of (1-d)*(1+b), which respectively represent the number 
+of individuals in the population after the count of deaths and births.
 
-$$n(t+1) = n(t) + r\times n(t)\times \left(1-n(t)\right)$$
+However, in natural conditions, a population rarely varies according to a linear growth, 
+since several factors, such as resource availability or a higher disease incidence. The 
+use of a logistic discreet-time model would then be more realistic. In such a model, it 
+is assumed that R declines as the population grows. In order to increase its dependence 
+on the population’s size, the reproductive factor could be written as R(n), which would 
+start at (1+rd), when the population size nears zero. The factor rd corresponds to the 
+intrinsic population growth rate, (b-d-bd). Eventually, as the population size increases 
+and the growth rate diminishes, the population will reach its carrying capacity, K, which 
+corresponds to the maximum number of individuals where the population can support itself.
+
+The equation describing variations of R(n) in function of population size would then be 
+written as such; R(n) = (1+ rd) + (-rd/K)n(t) (1.2), where (1+ rd) represents the intercept, 
+and (rd/K), the slope of the equation.
+
+By replacing R from 1.1 by a more realistic reproductive factor (R(n)), the recursion equation 
+for population growth then becomes $$n(t+1) = n(t) + r\times n(t)\times \left(1-\frac{n(t)}{K}\right)$$
+
+For the sake of simplicity, this work will be using $$n(t)= n(t)+ r\times n(t)\times \left(1-\n(t)\right)$$, K equaling 1, 
+in order to render the model dimensionless.
+
 
 ## Model analysis
+This model is a discrete time model, so it has an equilibrium every time $n(t+1) = n(t)$. 
+We will look two such cases where no variation can be observed in the model.
+
+The first equilibrium case would go such as:
+$$n(t)= n(t)+ r\times n(t)\times \left(1-\n(t)\right)$$
+$$n(t)= 0+ r\times 0\times \left(1-\0\right)$$
+$$n(t+1) = 0$$
+
+The second equilibrium case would go such as:
+$$n(t)= n(t)+ r\times n(t)\times \left(1-\n(t)\right)$$
+$$n(t)= 1+ r\times 1\times \left(1-\1\right)$$
+$$n(t+1) = 1$$
+
 
 ## Simulations
+i) First, let’s set the function
+
+```julia
+function f(n::Float64, r::Float64)
+return n + n*r*(1.0-n)
+end
+```
+Now, let us set the values of the model. In order to find the r value at 
+which the population will no longer be able to sustain itself, let’s repeat
+this step, increasing each time the value or r by 1. Once such value is either 
+reached or exceeded, let us vary around such value by steps of 0.1.
+
+```julia
+r = 1.0 
+n = zeros(Float64, 100)
+n[1] = 0.05
+for t in 1:(length(n)-1)
+n[t+1] = f(n[t], r)
+end
+```
+Let us plot every change made above with the following code in order to properly observe any change.
+
+```julia
+using Plots
+plot!(n)
+```
+
+#ii)
+using Plots
+growth_rate = collect(1.0:0.01:3.0)
+
+function logistic_growth(n::Float64, r::Float64)
+    return (n+(r*n*(1-(n/1))))
+end
+    
+    pop_size = zeros(Float64, 200)
+    pop_size[1] = 10.0
+    
+growth_rate_actual = zeros(Float64, 200)
+
+data_x = Float64[]
+data_y = Float64[]
+for r in 1.0:0.01:3.0
+        for i in 2:length(pop_size)
+            pop_size[i] = logistic_growth(pop_size[i-1], r)
+            growth_rate_actual[i-1] = r
+            growth_rate_actual[i] = r
+        end
+        
+    data_x = vcat(data_x, growth_rate_actual[101:200])
+    data_y = vcat(data_y, pop_size[101:200])
+end
+
+scatter(data_x, data_y, fmt = :png)
+
 
 ## Conclusions
+We have designed a model representing the logistic growth of a population 
+over time according to the initial number of individuals present at time 
+0 and to an intrinsic growth rate r. We have identified the values at which 
+the population will no longer vary, which are N=0, N=1 and r=3. When r=3, 
+the population growth rate can no longer sustain itself. Moreover, when r 
+reaches a value of 2, the system starts to be chaotic. It would be interesting, 
+in a future work, to observe at which value of r chaos would begin if K was 
+set to a value superior to 1, thus removing the dimensionless statue of the model. 
