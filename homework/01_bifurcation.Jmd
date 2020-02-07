@@ -67,60 +67,74 @@ $$n(t+1) = 1$$
 
 
 ## Simulations
-i) First, let’s set the function
+i)
+Now, let us set the values of the model. First, we’ll set the function. 
+Then, in order to find the r value at which the population will no longer 
+be able to sustain itself, we will iterate the function 150 times, starting 
+at a size of 0.1. Every value of r under 0 will be printed, which will inform 
+us on which r represents the limit for the population’s sustainability.
 
 ```julia
+using Printf
+
 function f(n::Float64, r::Float64)
-return n + n*r*(1.0-n)
+    return (n + (r * n * (1.0 - n)))
 end
-```
-Now, let us set the values of the model. In order to find the r value at 
-which the population will no longer be able to sustain itself, let’s repeat
-this step, increasing each time the value or r by 1. Once such value is either 
-reached or exceeded, let us vary around such value by steps of 0.1.
 
-```julia
-r = 1.0 
-n = zeros(Float64, 100)
-n[1] = 0.05
-for t in 1:(length(n)-1)
-n[t+1] = f(n[t], r)
+population_size = zeros(Float64, 150)
+population_size[1] = 0.1
+
+for r = 0.1:0.01:4
+    for i = 2:length(population_size)
+        population_size[i] = f(population_size[i-1], r)
+        if population_size[i] < 0
+            println(r)
+        end
+    end
 end
-```
-Let us plot every change made above with the following code in order to properly observe any change.
-
-```julia
-using Plots
-plot!(n)
 ```
 
 #ii)
-using Plots
-growth_rate = collect(1.0:0.01:3.0)
 
+```julia
+# Here we will create the logistic growth function
 function logistic_growth(n::Float64, r::Float64)
-    return (n+(r*n*(1-(n/1))))
+    return (n + (r*n*(1.0-n)))
 end
-    
-    pop_size = zeros(Float64, 200)
-    pop_size[1] = 10.0
-    
-growth_rate_actual = zeros(Float64, 200)
 
-data_x = Float64[]
-data_y = Float64[]
-for r in 1.0:0.01:3.0
+
+#And here, we will create the bifurcation function
+function bifurcation()
+       # Creation of the variables
+    pop_size = zeros(Float64, 200)
+    pop_size[1] = 0.1
+
+
+    growth_rate = collect(1:0.001:3)
+    growth_rate_actual = zeros(Float64, 200)
+
+
+    data_x = Float64[]
+    data_y = Float64[]
+
+
+    # We then need to set the calculation of the population’s size for every value of r 
+    for r in 1:0.001:3
         for i in 2:length(pop_size)
             pop_size[i] = logistic_growth(pop_size[i-1], r)
             growth_rate_actual[i-1] = r
             growth_rate_actual[i] = r
         end
-        
-    data_x = vcat(data_x, growth_rate_actual[101:200])
-    data_y = vcat(data_y, pop_size[101:200])
-end
+        data_x = vcat(data_x, growth_rate_actual[181:200])
+        data_y = vcat(data_y, pop_size[181:200])
+    end
 
-scatter(data_x, data_y, fmt = :png)
+
+    # Finally, let’s scatter the last 80 values or r and plot it
+    scatter(data_x, data_y, fmt = :png, title = "Bifurcation diagram",
+    xlabel = "Intrinsic growth rate (r)", ylabel ="Population sizes observed between t= 181 and 200", legend=:none, left_margin = 10mm, bottom_margin = 10mm) 
+end
+bifurcation()
 
 
 ## Conclusions
